@@ -129,6 +129,7 @@ pub mod rpsx {
     pub fn move_piece(ctx: Context<MovePiece>) -> Result<ThreadResponse> {
         let game = &mut ctx.accounts.game;
         let piece = &mut ctx.accounts.piece;
+        let thread = &ctx.accounts.thread;
 
         // Get this piece's current team.
         let maybe_our_team = &game.board[piece.x as usize][piece.y as usize];
@@ -174,7 +175,19 @@ pub mod rpsx {
             game.board[piece.x as usize][piece.y as usize] = Some(our_team);
         }
          
-        Ok(ThreadResponse::default())
+        Ok(ThreadResponse {
+            next_instruction: Some(
+            Instruction {
+                program_id: crate::ID,
+                accounts: crate::accounts::MovePiece {
+                    game: game.key(),
+                    piece: piece.key(),
+                    thread: thread.key()
+                }.to_account_metas(None),
+                data: crate::instruction::MovePiece{}.data(),
+            }.into()),
+            ..ThreadResponse::default()
+        })
     }
 }
 
